@@ -48,7 +48,7 @@ __global__ void matrixMultiplyShared(float * A, float * B, float * C,
     	ds_N[ty][tx] = 0;
   }
       	__syncthreads();
-  if(Row < numCRows || Col < numCColumns){
+  if(Row < numCRows && Col < numCColumns){
         for(int k=0; k<TILE_WIDTH; ++k){
 	          Pvalue += ds_M[ty][k]*ds_N[k][tx];
         }

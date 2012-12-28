@@ -48,7 +48,7 @@ __global__ void matrixMultiplyShared(float * A, float * B, float * C,
     	ds_N[ty][tx] = 0;
   }
       	__syncthreads();
-  if(Row < numCRows && Col < numCColumns){
+  if(Row < numCRows || Col < numCColumns){
         for(int k=0; k<TILE_WIDTH; ++k){
 	          Pvalue += ds_M[ty][k]*ds_N[k][tx];
         }
@@ -113,7 +113,7 @@ int main(int argc, char ** argv) {
     wbTime_stop(GPU, "Copying input memory to the GPU.");
     
     //@@ Initialize the grid and block dimensions here
-    dim3 dimGrid((numCRows - 1)/TILE_WIDTH + 1, (numCColumns - 1)/TILE_WIDTH + 1, 1);
+    dim3 dimGrid((numCColumns - 1)/TILE_WIDTH + 1, (numCRows - 1)/TILE_WIDTH + 1, 1);
     dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
   
     wbTime_start(Compute, "Performing CUDA computation");
