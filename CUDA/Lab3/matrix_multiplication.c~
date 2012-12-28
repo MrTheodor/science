@@ -1,7 +1,4 @@
 // MP 3: Due Sunday, Dec 30, 2012 at 11:59 p.m. PST
-// Author: Jakub Krajniak <jkrajniak@gmail.com>
-// Assignment for https://class.coursera.org/hetero-2012-001/class/index
-
 #include    <wb.h>
 
 #define TILE_WIDTH 16
@@ -31,33 +28,39 @@ __global__ void matrixMultiplyShared(float * A, float * B, float * C,
     int Row = by*TILE_WIDTH + ty;
     int Col = bx*TILE_WIDTH + tx;
   
+  	
+  
     float Pvalue = 0;
     for (int m=0; m < (numAColumns-1)/TILE_WIDTH+1; ++m){
-	    // load values into shared memory
-	    // each thread has own ty, tx pair which load single value
-	    // as every threads in block load all values into TILL_WIDTH memory, we can execute computing
-	    // this part of matrix
-	    if(Row < numARows && (m*TILE_WIDTH+tx) < numAColumns){
-        		ds_M[ty][tx] = A[Row*numAColumns + m*TILE_WIDTH+tx];
-        	} else {
-          		ds_M[ty][tx] = 0;
-	    }
-	    if(m*TILE_WIDTH+ty < numBRows && Col < numBColumns){ 
-		    ds_N[ty][tx] = B[(m*TILE_WIDTH+ty)*numBColumns+Col];
-	    } else {
-	        	ds_N[ty][tx] = 0;
-	    }
-          	__syncthreads();
-	    if(Row < numCRows && Col < numCColumns){
-            for(int k=0; k<TILE_WIDTH; ++k){
-                Pvalue += ds_M[ty][k]*ds_N[k][tx];	  
-            }
-        }
-        __syncthreads();
-        if(Row < numCRows && Col < numCColumns){
-            C[Row*numCColumns+Col] = Pvalue;
-        }
+	// load values into shared memory
+	// each thread has own ty, tx pair which load single value
+	// as every threads in block load all values into TILL_WIDTH memory, we can execute computing
+	// this part of matrix
+      if(Row < numARows && (m*TILE_WIDTH+tx) < numAColumns){
+    	ds_M[ty][tx] = A[Row*numAColumns + m*TILE_WIDTH+tx];
+        
+    } else {
+      	ds_M[ty][tx] = 0;
     }
+  if(m*TILE_WIDTH+ty < numBRows && Col < numBColumns){ 
+  		ds_N[ty][tx] = B[(m*TILE_WIDTH+ty)*numBColumns+Col];
+  } else {
+    	ds_N[ty][tx] = 0;
+  }
+      	__syncthreads();
+  if(Row < numCRows && Col < numCColumns){
+        for(int k=0; k<TILE_WIDTH; ++k){
+	          Pvalue += ds_M[ty][k]*ds_N[k][tx];
+        }
+  }
+      	__syncthreads();
+  if(Row < numCRows && Col < numCColumns){
+        C[Row*numCColumns+Col] = Pvalue;
+  }
+    
+  }
+    //@@ Insert code to implement matrix multiplication here
+    //@@ You have to use shared memory for this MP
 }
 
 int main(int argc, char ** argv) {
@@ -93,7 +96,7 @@ int main(int argc, char ** argv) {
 
     wbLog(TRACE, "The dimensions of A are ", numAColumns, " x ", numARows);
     wbLog(TRACE, "The dimensions of B are ", numBColumns, " x ", numBRows);
-    wbLog(TRACE, "The dimensions of C are ", numCColumns, " x ", numCRows);
+  wbLog(TRACE, "The dimensions of C are ", numCColumns, " x ", numCRows);
 
     wbTime_start(GPU, "Allocating GPU memory.");
     //@@ Allocate GPU memory here
@@ -110,14 +113,11 @@ int main(int argc, char ** argv) {
     wbTime_stop(GPU, "Copying input memory to the GPU.");
     
     //@@ Initialize the grid and block dimensions here
-    dim3 dimGrid(ceil(float(numCRows)/TILE_WIDTH), ceil(float(numCColumns)/TILE_WIDTH), 1);
+    dim3 dimGrid((numCRows - 1)/TILE_WIDTH + 1, (numCColumns - 1)/TILE_WIDTH + 1, 1);
     dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
-  	wbLog(TRACE, "Grid.x ", ceil(float(numCRows)/TILE_WIDTH), "Grid.y ", ceil(float(numCColumns)/TILE_WIDTH));
   
     wbTime_start(Compute, "Performing CUDA computation");
     //@@ Launch the GPU Kernel here
-    wbLog(TRACE, "blockA ", ceil(float(numAColumns)/TILE_WIDTH));
-    wbLog(TRACE, "blockB ", ceil(float(numBRows)/TILE_WIDTH));
   	
 	matrixMultiplyShared<<<dimGrid, dimBlock>>>(deviceA, deviceB, deviceC,
                                                 numARows, numAColumns,
@@ -146,3 +146,4 @@ int main(int argc, char ** argv) {
 
     return 0;
 }
+
