@@ -1,7 +1,0 @@
-#!/bin/bash
-##obliczanie RDF
-
-ls *.xyz | xargs -i ./Sk3D 1 {} config.txt
-
-cat *.sff >> out.all
-./Sk3D 2 out.all

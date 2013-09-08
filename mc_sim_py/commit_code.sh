@@ -1,1 +1,0 @@
-scripts/commit_code.sh

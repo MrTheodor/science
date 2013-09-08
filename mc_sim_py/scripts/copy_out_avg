@@ -1,3 +1,0 @@
-#!/bin/bash
-print "out_avg_dir return_dir"
-find $1 -name "out.avg" | while read a; do cp -v "$a" "$2/`echo $a | cut -f2 -d'/'`_`basename $a`"; done
